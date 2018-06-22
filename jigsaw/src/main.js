@@ -118,7 +118,6 @@ function handleImageChange(){
 }
 
 function handleClick(blockId){
-    console.log("click");
     if(completeGame){
         return;
     }
@@ -133,7 +132,6 @@ function handleClick(blockId){
 
 function handleMouseDown(e, blockId){
     e = e || window.event;
-    console.log("down");
 
     //获取x坐标和y坐标
     var fromX = e.clientX;
@@ -145,8 +143,11 @@ function handleMouseDown(e, blockId){
     var t = targetNode.offsetTop;
     var copyNode = null;
 
+    var parent = document.getElementsByClassName("pic")[0];
+    var maxX = parent.offsetWidth;
+    var maxY = parent.offsetHeight;
+
     document.onmousemove = function(e){
-        //console.log("move");
         e = e || window.event;
         //获取x和y
         var toX = e.clientX;
@@ -167,15 +168,16 @@ function handleMouseDown(e, blockId){
 
         if(copyNode){
             console.log("move");
-            copyNode.style.left = toX - fromX + l + 'px';
-            copyNode.style.top = toY - fromY + t  + 'px';
+            let left = toX - fromX + l;
+            let top = toY - fromY + t;
+             // 不能超出边界
+            copyNode.style.left = (left<0 ? 0 : (left>maxX ? maxX : left)) + 'px';
+            copyNode.style.top = (top<0 ? 0 : (top>maxY ? maxY : top)) + 'px';
 
-            // TODO 不能超出边界
         }
     }
 
     document.onmouseup = function(e){
-        console.log("up");
         // copyNode.style.display = "none";
         // copyNode = null;
         document.onmousemove = null;
