@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="keywords" content="jigsaw, game, js">
+        <title>拼图游戏</title>
+        <link rel="stylesheet" href="src/style.css"></link>
+        <script type="text/javascript" src="src/main.js"></script>
+    </head>
+    <body>
+        <div class="wrapper">
+            <header class="action">
+                <div class="part f-end">
+                    <div class="left">
+                        <div class="mar-t10">
+                            <label>拼图规格：</label>
+                            <input type="number" id="column" class="size" />
+                            <span>*</span>
+                            <input type="text" id="row" class="size" />
+                        </div>
+                        <div class="mar-t10">
+                            <label>上传图片：</label>
+                            <div class="pos-r display-inline">
+                                <input type="text" id="img-path" class="file-box" >
+                                <input type="file" id="upload-btn" class="file-btn"/>
+                            </div>
+                        </div>
+                        <button class="start-btn class="mar-t10"" onclick="reRender()">重新开始</button>
+                    </div>
+                </div>
+                <div class="part f-start">
+                    <div class="right">
+                    </div>
+                </div>
+            </header>
+            <div class="main">
+                <div class="pic">
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

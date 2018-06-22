@@ -1,0 +1,142 @@
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    overflow: auto;
+    font-family: "lucida grande", "lucida sans unicode", lucida, helvetica, "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #ffffff;
+}
+
+.wrapper{
+    width: 100%;
+    min-width: 500px;
+    max-width: 1100px;
+    height: 100%;
+    margin: 0 auto;
+}
+
+.action{
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    height: 200px;
+    background-color: #4db6ac;
+}
+
+.left{
+    display: flex;
+    flex-flow: column wrap;
+    align-items: flex-end;
+}
+
+.part{
+    flex: 1;
+    display: flex;
+    padding: 10px;
+    border: 1px solid #999;
+}
+
+.f-start{justify-content: flex-start;}
+.f-end{justify-content: flex-end;}
+.mar-t10{margin-top: 10px;}
+
+input{
+    margin: 3px;
+    padding: 3px 5px;
+    border: 0;
+    border-radius: 5px;
+    font-size: inherit;
+    color: #4db6ac;
+}
+
+input:focus{
+    outline: none;
+}
+
+.size{
+    width: 50px;
+}
+
+button{
+    height: 30px;
+    padding: 5px 10px;
+    margin: 5px;
+    border: 0;
+    color: #4db6ac;
+    background: #ffffff;
+    font-size: inherit;
+    border-radius: 8px;
+}
+
+button:focus{
+    outline: none;
+}
+
+.start-btn{
+    margin-top: 20px;
+}
+
+.file-box{
+    display: inline-block;
+    position: relative;
+    width: 200px;
+    height: 22px;
+    padding: 3px 5px;
+    top: 5px;
+    overflow: hidden;
+    color: #4db6ac;
+    background-color: #ffffff;
+    border-radius: 5px;
+}
+
+.file-btn{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    outline: none;
+    background-color: transparent;
+    opacity: 0;
+    -moz-opacity:0;
+    -khtml-opacity: 0;
+}
+
+.pic{
+    display: flex;
+    flex-flow: row wrap; 
+    align-content: flex-start;
+    width: 600px;
+    height: 600px;
+    margin: 20px auto;
+    padding: 4px;
+    background-color: #b2dfdb;
+    position: relative;
+}
+
+.block{
+    flex-grow: 1;
+    padding: 1px;
+}
+
+.selected .piece{
+    outline: #009688 solid 2px;
+}
+
+.piece{
+    width: 100%;
+    height: 100%;
+    /* background-image: url("../res/bg_6.jpg"); */
+    background-repeat:no-repeat;
+}
+
+.pos-r{
+    position: relative;
+}
+.display-inline{display: inline-block;}
