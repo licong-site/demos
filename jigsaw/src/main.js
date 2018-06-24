@@ -4,10 +4,12 @@ var row = 3, column = 3;
 var completeGame = false;
 var uploadImageData;
 var defaultImage = "./res/bg_6.jpg";
+var orderArr = [];
 
 window.onload = function(){
     init();
     this.document.getElementById("upload-btn").onchange = handleImageChange;
+    this.document.onkeydown = handleKeyDown;
 };
 
 function init(){
@@ -48,7 +50,7 @@ function reRender(){
 
 function renderBlocks(bgImg){
     bgImg = bgImg || defaultImage;
-    let orderArr = getRandomArr();
+    orderArr = getRandomArr();
     let parentEle = document.getElementsByClassName("pic")[0];
 
     for(let i = 0; i < row; i++){
@@ -58,57 +60,36 @@ function renderBlocks(bgImg){
             let width = (100/column).toFixed(2);
             let height = (100/row).toFixed(2);
             let index = i*column + j;
-            // <div class="block" id="block_1" style="order: 1;" onclick="handleClick('block_1')"><div class="piece" style=" background-position: 0% 0%;"></div></div>
-            let block = `<div class="block" id="block_${index}" style="order: ${orderArr[index]}; width: ${width}%; height: ${height}%;" onclick="handleClick('block_${index}')" onmousedown="handleMouseDown(event, 'block_${index}')">
+            let block = `<div class="block" id="block_${index}" style="order: ${orderArr[index]}; width: ${width}%; height: ${height}%;" onclick="handleClick(event, 'block_${index}')" onmousedown="handleMouseDown(event, 'block_${index}')">
                         <div class="piece" style=" background-position: ${percentX}% ${percentY}%; background-size: ${column*100}% ${row*100}%;background-image: url(${bgImg});"></div>
                     </div>`;
 
             parentEle.appendChild(parseDom(block));
         }
     }
+
+    //console.log(orderArr);
 }
 
-function getRandomArr(){
-    let num = row * column;
-    let orderArr = [];
-
-    // 生成乱序数组
-    while(orderArr.length < num){
-        let order = Math.floor(Math.random()*num);
-        if(orderArr.indexOf(order) == -1){
-            orderArr.push(order);
-        }
-    }
-    
-    // 判断乱序数组和原始数组是否一样; 考虑游戏难度，相同的元素不超过2
-    let orderNum = 0;
-    for(let i = 0; i < num; i++){
-        if(orderArr[i] == i){
-            orderNum++;
-            if(orderNum > 2){
-                break;
-            }
-        }
-    }
-
-    if(orderNum > 2){
-        orderArr = getRandomArr();
-    }
-
-    return orderArr;
-}
-
-function exchangeBlock(block1, block2) {
+// 交换block1, block2两个拼图小块的位置
+// keepSelected 设置是否保持选中小块的选中状态, 默认 false
+function exchangeBlock(block1, block2, keepSelected) {
     if(block1.id != block2.id){
         let order_1 = block1.style.order;
         let order_2 = block2.style.order;
         block1.style.order = order_2;
         block2.style.order = order_1;
+
+        orderArr[block2.id.substring(6)*1] = order_1*1;
+        orderArr[block1.id.substring(6)*1] = order_2*1;
+
+        if(!keepSelected){
+            // 使用键盘键交换元素位置后不会取消元素选中状态
+            unselectBlock();
+        }else
+        // 检查是否完成拼图
         check();
     }
-
-    // 同一块拼图点击两次会取消第一次的选中状态
-    unselectBlock();
 }
 
 function handleImageChange(){
@@ -117,16 +98,24 @@ function handleImageChange(){
     document.getElementById("img-path").value = imgEle.value;
 }
 
-function handleClick(blockId){
+function handleClick(e, blockId){
     if(completeGame){
         return;
     }
 
     let block = document.getElementById(blockId);
-    if(selectedBlock){
-        exchangeBlock(selectedBlock, block);
-    }else{
+
+    if(!selectedBlock){
         selectBlock(block);
+    }else if(selectedBlock.id == blockId){
+        // 点击选中状态的拼图会取消中状态
+        unselectBlock();
+    }else if(selectedBlock.preActionType == "keyboard"){
+        // 选中元素上一次执行键盘交换操作，下一次的点击的时候会重新选中点击元素而不是执行交换操作
+        unselectBlock();
+        selectBlock(block);
+    }else{
+        exchangeBlock(selectedBlock, block);
     }
 }
 
@@ -144,15 +133,14 @@ function handleMouseDown(e, blockId){
     var copyNode = null;
 
     var parent = document.getElementsByClassName("pic")[0];
-    var maxX = parent.offsetWidth;
-    var maxY = parent.offsetHeight;
+    var maxX = parent.offsetWidth - targetNode.offsetWidth;
+    var maxY = parent.offsetHeight - targetNode.offsetHeight;
 
     document.onmousemove = function(e){
         e = e || window.event;
         //获取x和y
         var toX = e.clientX;
         var toY = e.clientY;
-
 
         if(!copyNode && (Math.abs(toX-fromX) >= 5 || Math.abs(toY-fromY) >= 5)){
             copyNode = targetNode.cloneNode(true);
@@ -167,33 +155,117 @@ function handleMouseDown(e, blockId){
         }
 
         if(copyNode){
-            console.log("move");
             let left = toX - fromX + l;
             let top = toY - fromY + t;
              // 不能超出边界
             copyNode.style.left = (left<0 ? 0 : (left>maxX ? maxX : left)) + 'px';
             copyNode.style.top = (top<0 ? 0 : (top>maxY ? maxY : top)) + 'px';
-
         }
     }
 
     document.onmouseup = function(e){
-        // copyNode.style.display = "none";
-        // copyNode = null;
         document.onmousemove = null;
-　　　　 document.onmouseup = null;
+        document.onmouseup = null;
+        if(copyNode){
+            copyNode.style.display = "none";
+            copyNode.parentNode.removeChild(copyNode);
+            copyNode = null;
+            e = e || window.event;
+            let toBlock = getBlockIdByPosition(e.clientX, e.clientY);
+            exchangeBlock(targetNode, document.getElementById(toBlock));
+            targetNode.style.opacity = 1;
+            targetNode = null;
+        }
+    }
+}
+
+function handleKeyDown(e){
+    if(selectedBlock){
+        e = e || window.event;
+
+        let order = selectedBlock.style.order * 1;
+        let rowIndex = Math.floor(order / column);
+        let columnIndex = order - rowIndex*column;
+
+        let toBlockOrder = -1;
+
+        if(e && e.keyCode == 37){ // 左
+            if(columnIndex === 0){
+                return;
+            }else{
+                toBlockOrder = order - 1;
+            }
+        }else if(e && e.keyCode == 38){ // 上
+            if(rowIndex === 0){
+                return;
+            }else{
+                toBlockOrder = order - column;
+            }
+        }else if(e && e.keyCode == 39){ // 右
+            if(columnIndex === column-1){
+                return;
+            }else{
+                toBlockOrder = order + 1;
+            }
+        }else if(e && e.keyCode == 40){ // 下
+            if(rowIndex === row-1){
+                return;
+            }else{
+                toBlockOrder = order + column;
+            }
+        }
+
+        if(toBlockOrder !== -1){
+            let toBlockId = orderArr.indexOf(toBlockOrder);
+            let toBlock = document.getElementById("block_" + toBlockId);
+            if(toBlock){
+                exchangeBlock(selectedBlock, toBlock, true);
+                selectedBlock.preActionType = "keyboard";
+            }
+        }
     }
 }
 
 function getBlockIdByPosition(x, y){
-    let block1 = document.getElementById("block_1");
-    let left = block1.offsetLeft;
-    let top = block1.offsetTop;
-    let w = block1.offsetWidth;
-    let h = block1.offsetHeight;
+    let block = document.getElementById("block_1");
+    let parent = document.getElementsByClassName("pic")[0];
+    let columnIndex = Math.floor((x - parent.offsetLeft) / block.offsetWidth);
+    columnIndex = columnIndex < 0 ? 0 : (columnIndex > column-1 ? column-1 : columnIndex);
+    let rowIndex = Math.floor((y - parent.offsetTop) / block.offsetHeight);
+    rowIndex = rowIndex < 0 ? 0 : (rowIndex > row-1 ? row-1 : rowIndex);
+    let order = rowIndex*column + columnIndex;
+    let id = orderArr.indexOf(order);
+    return "block_" + id;
+}
 
-    //y - top
+function getRandomArr(){
+    let num = row * column;
+    let randomArr = [];
 
+    // 生成乱序数组
+    while(randomArr.length < num){
+        let order = Math.floor(Math.random()*num);
+        if(randomArr.indexOf(order) == -1){
+            randomArr.push(order);
+        }
+    }
+    
+    // 判断乱序数组和原始数组是否一样; 考虑游戏难度，相同的元素不超过2
+    let orderNum = 0;
+    for(let i = 0; i < num; i++){
+        if(randomArr[i] == i){
+            orderNum++;
+            if(orderNum > 2){
+                break;
+            }
+        }
+    }
+
+    if(orderNum > 2){
+        randomArr = getRandomArr();
+    }
+
+    return randomArr;
 }
 
 function selectBlock(block){
@@ -202,27 +274,39 @@ function selectBlock(block){
 }
 
 function unselectBlock(){
-    removeClass(selectedBlock, "selected");
-    selectedBlock = null;
+    if(selectedBlock){
+        removeClass(selectedBlock, "selected");
+        selectedBlock = null;
+    }
 }
 
 // 拼图是否成功
 function check(){
     let result = true;
-    let parentEle = document.getElementsByClassName("pic")[0];
-    let blocks = parentEle.children;
 
-    var num = row * column;
-    for(let i = 0; i < num; i++){
-        // block 元素id格式为 "block_"+index
-        if(blocks[i] && blocks[i].style.order !== blocks[i].id.substring(6)){
-            result = false;
-            break;
+    // 判断 block 节点的id和order是否一致
+    // let parentEle = document.getElementsByClassName("pic")[0];
+    // let blocks = parentEle.children;
+    // var num = row * column;
+    // for(let i = 0; i < num; i++){
+    //     // block 元素id格式为 "block_"+index
+    //     if(blocks[i] && blocks[i].style.order !== blocks[i].id.substring(6)){
+    //         result = false;
+    //         break;
+    //     }
+    // }
+
+    // 判断 orderArr 数组元素的值和下标是否一致
+    if(orderArr && orderArr.length > 0){
+        for(let i = 0, len = orderArr.length; i < len; i++){
+            if(orderArr[i] !== i){
+                result = false;
+                break;
+            }
         }
     }
 
     completeGame = result;
-
     if(result) onSuccess();
 }
 
