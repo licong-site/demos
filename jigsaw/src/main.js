@@ -2,9 +2,10 @@
 var selectedBlock;
 var row = 3, column = 3;
 var completeGame = false;
-var uploadImageData;
+var uploadFile;
 var defaultImage = "./res/bg_6.jpg";
 var orderArr = [];
+var copyNode; // 拖拽生成的移动拼图块的副本节点
 
 window.onload = function(){
     init();
@@ -16,33 +17,21 @@ function init(){
     // 设置默认值
     document.getElementById("column").value = column;
     document.getElementById("row").value = row;
-
     renderBlocks();
 }
 
 // 点击重新开始，打乱、重新生成拼图
 function reRender(){
     completeGame = false;
-    curColumn = document.getElementById("column").value;
-    curRow = document.getElementById("row").value;
+    column = document.getElementById("column").value;
+    row = document.getElementById("row").value;
 
-    column = curColumn;
-    row = curRow;
-
-    // 删除之前的拼图节点
-    let picEle = document.getElementsByClassName("pic")[0];
-    let parent = picEle.parentNode;
-    parent.removeChild(picEle);
-    picEle = document.createElement("div");
-    addClass(picEle, "pic");
-    parent.appendChild(picEle);
-
-    if(uploadImageData){
+    if(uploadFile){
         let fr = new FileReader();
         fr.onload = function(){
             renderBlocks(this.result);
         };
-        fr.readAsDataURL(uploadImageData);
+        fr.readAsDataURL(uploadFile);
     }else{
         renderBlocks(defaultImage);
     }
@@ -51,24 +40,62 @@ function reRender(){
 function renderBlocks(bgImg){
     bgImg = bgImg || defaultImage;
     orderArr = getRandomArr();
-    let parentEle = document.getElementsByClassName("pic")[0];
 
+    // 删除之前的拼图节点
+    let picEle = document.getElementsByClassName("pic")[0];
+    let parent = picEle.parentNode;
+    parent.removeChild(picEle);
+    picEle = document.createElement("div");
+    addClass(picEle, "pic");
+    parent.appendChild(picEle);
+     
     for(let i = 0; i < row; i++){
         for(let j = 0; j < column; j++){
-            let percentX = (j/(column-1)*100).toFixed(2);
-            let percentY = (i/(row-1)*100).toFixed(2);
-            let width = (100/column).toFixed(2);
-            let height = (100/row).toFixed(2);
-            let index = i*column + j;
-            let block = `<div class="block" id="block_${index}" style="order: ${orderArr[index]}; width: ${width}%; height: ${height}%;" onclick="handleClick(event, 'block_${index}')" onmousedown="handleMouseDown(event, 'block_${index}')">
-                        <div class="piece" style=" background-position: ${percentX}% ${percentY}%; background-size: ${column*100}% ${row*100}%;background-image: url(${bgImg});"></div>
-                    </div>`;
-
-            parentEle.appendChild(parseDom(block));
+            let block = createBlockDom(i, j, bgImg);
+            picEle.appendChild(block);
         }
     }
 
-    //console.log(orderArr);
+    picEle.addEventListener("click", function(e){
+        e = e || window.event;
+        let target = e.target || e.srcElement;
+        let block = target.parentNode;
+        if(block && block.id && block.id.indexOf("block_") == 0){
+            handleClick(block);
+        }
+    });
+
+    picEle.addEventListener("mousedown", function(e){
+        e = e || window.event;
+        let target = e.target || e.srcElement;
+        let block = target.parentNode;
+        if(block && block.id && block.id.indexOf("block_") == 0){
+            handleMouseDown(e, block.id);
+        }
+    });
+}
+
+function createBlockDom(rowIndex, columnIndex, bgImg){
+    let index = rowIndex*column + columnIndex;
+    let block = document.createElement("div");
+    block.className = "block";
+    block.id = "block_" + index;
+    block.style.order = orderArr[index];
+    block.style.width = (100/column).toFixed(2) + "%";
+    block.style.height = (100/row).toFixed(2) + "%";
+
+    let piece = document.createElement("div");
+    let percentX = (columnIndex/(column-1)*100).toFixed(2);
+    let percentY = (rowIndex/(row-1)*100).toFixed(2);
+    piece.className = "piece";
+    piece.style.backgroundImage = "url(" + bgImg + ")";
+    piece.style.backgroundSize = column*100 + "% " + row*100 + "%";
+    piece.style.backgroundPositionX = percentX + "%";
+    piece.style.backgroundPositionY = percentY + "%";
+
+    block.appendChild(piece);
+
+    return block;
 }
 
 // 交换block1, block2两个拼图小块的位置
@@ -83,31 +110,45 @@ function exchangeBlock(block1, block2, keepSelected) {
         orderArr[block2.id.substring(6)*1] = order_1*1;
         orderArr[block1.id.substring(6)*1] = order_2*1;
 
+        //console.log(orderArr);
+
         if(!keepSelected){
             // 使用键盘键交换元素位置后不会取消元素选中状态
             unselectBlock();
-        }else
+        }
         // 检查是否完成拼图
-        check();
+        completeGame = check();
+        if(completeGame) onSuccess();
     }
 }
 
 function handleImageChange(){
     let imgEle = document.getElementById("upload-btn");
-    uploadImageData = imgEle.files[0];
-    document.getElementById("img-path").value = imgEle.value;
+    if(imgEle.files[0]){
+        let separator = imgEle.files[0].name.indexOf(".");
+        let ext = imgEle.files[0].name.substring(separator+1);
+        if(ext != "jpg" && ext != "png" && ext != "jpeg" && ext != "gif"){
+            showMessage("只能上传.jpg  .png  .jpeg  .gif类型的文件!");
+        }else{
+            uploadFile = imgEle.files[0];
+            document.getElementById("img-path").value = imgEle.value;
+        }
+    }
+    
 }
 
-function handleClick(e, blockId){
+function handleClick(block){
+    
     if(completeGame){
         return;
     }
 
-    let block = document.getElementById(blockId);
+    // e = e || window.event;
+    // let block = e.currentTarget;
 
     if(!selectedBlock){
         selectBlock(block);
-    }else if(selectedBlock.id == blockId){
+    }else if(selectedBlock.id == block.id){
         // 点击选中状态的拼图会取消中状态
         unselectBlock();
     }else if(selectedBlock.preActionType == "keyboard"){
@@ -120,7 +161,10 @@ function handleClick(e, blockId){
 }
 
 function handleMouseDown(e, blockId){
-    e = e || window.event;
+
+    if(completeGame || copyNode){
+        return;
+    }
 
     //获取x坐标和y坐标
     var fromX = e.clientX;
@@ -130,7 +174,7 @@ function handleMouseDown(e, blockId){
     //获取左部和顶部的偏移量
     var l = targetNode.offsetLeft;
     var t = targetNode.offsetTop;
-    var copyNode = null;
+    //var copyNode = null;
 
     var parent = document.getElementsByClassName("pic")[0];
     var maxX = parent.offsetWidth - targetNode.offsetWidth;
@@ -306,8 +350,7 @@ function check(){
         }
     }
 
-    completeGame = result;
-    if(result) onSuccess();
+    return result;
 }
 
 function onSuccess(){
@@ -315,6 +358,7 @@ function onSuccess(){
     let blocks = document.getElementsByClassName("block");
     for(let i = 0, len = blocks.length; i < len; i++ ){
         blocks[i].style.padding = 0;
+        unselectBlock();
     }
 
     showMessage("success");
