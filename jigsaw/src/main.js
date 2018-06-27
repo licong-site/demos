@@ -1,11 +1,11 @@
-
-var selectedBlock;
-var row = 3, column = 3;
-var completeGame = false;
-var uploadFile;
-var defaultImage = "./res/bg_6.jpg";
-var orderArr = [];
+var row = 3, column = 3; // 默认拼图规格为3*3
+var rotateAnimationTime = 500; // 拼图成功后拼图块旋转动画时间
+var defaultImage = "./res/bg_6.jpg"; // 默认拼图图片
+var completeGame = false;  // 是否完成拼图
+var uploadFile;  // 上传的图片文件
+var orderArr = []; // 表示拼图块随机排列顺序的数组
 var copyNode; // 拖拽生成的移动拼图块的副本节点
+var selectedBlock; // 点击选中的拼图块
 
 window.onload = function(){
     init();
@@ -59,9 +59,14 @@ function renderBlocks(bgImg){
     picEle.addEventListener("click", function(e){
         e = e || window.event;
         let target = e.target || e.srcElement;
-        let block = target.parentNode;
-        if(block && block.id && block.id.indexOf("block_") == 0){
-            handleClick(block);
+
+        if(target.className.indexOf("rotate-icon") != -1){
+            rotateBlock(e);
+        }else{
+            let block = target.parentNode;
+            if(block && block.id && block.id.indexOf("block_") == 0){
+                handleClick(block);
+            }
         }
     });
 
@@ -93,7 +98,23 @@ function createBlockDom(rowIndex, columnIndex, bgImg){
     piece.style.backgroundPositionX = percentX + "%";
     piece.style.backgroundPositionY = percentY + "%";
 
+    // 将矩形块随机旋转一个角度增加游戏难度, 50%概率下不会旋转
+    var random = Math.random()*6;
+    if(random < 1){
+        piece.style.transform = "rotate(270deg)";
+    }else if(random < 2){
+        piece.style.transform = "rotate(180deg)";
+    }else if(random < 3){
+        piece.style.transform = "rotate(90deg)";
+    }else{
+        piece.style.transform = "rotate(0deg)";
+    }
+
+    let icon = document.createElement("i");
+    icon.className = "icon_rotate_right rotate-icon";
+
     block.appendChild(piece);
+    block.appendChild(icon);
 
     return block;
 }
@@ -122,6 +143,43 @@ function exchangeBlock(block1, block2, keepSelected) {
     }
 }
 
+function changeBlocksNum(e){
+    e = e || window.event;
+    let target = e.target || e.srcElement;
+
+    if(hasClass(target, "disabled-drop-icon")){
+        return;
+    }
+
+    let inputEle = target.parentNode.getElementsByTagName("input")[0];
+    let min = 2, max = 5;
+    let num, upEle, downEle;
+    if(hasClass(target, "up-icon")){
+        num = 1;
+        upEle = target;
+        downEle = target.parentNode.getElementsByClassName("down-icon")[0];
+    }else{
+        num = -1;
+        downEle = target;
+        upEle = target.parentNode.getElementsByClassName("up-icon")[0];
+    }
+
+    let value = inputEle.value*1 + num;
+    inputEle.value = value;
+
+    if(value == min){
+        addClass(downEle, "disabled-drop-icon");
+    }else{
+        removeClass(downEle, "disabled-drop-icon");
+    }
+
+    if(value == max){
+        addClass(upEle, "disabled-drop-icon");
+    }else{
+        removeClass(upEle, "disabled-drop-icon");
+    }
+}
+
 function handleImageChange(){
     let imgEle = document.getElementById("upload-btn");
     if(imgEle.files[0]){
@@ -134,7 +192,24 @@ function handleImageChange(){
             document.getElementById("img-path").value = imgEle.value;
         }
     }
-    
+}
+
+function rotateBlock(e){
+    if(completeGame){
+        return;
+    }
+
+    let piece = e.target.parentNode.getElementsByClassName("piece")[0];
+    let rotate = piece.style.transform; // rotate(90deg)
+    let angle = 0;
+    if(rotate && rotate.indexOf("rotate(") == 0){
+        angle = rotate.substring(7, rotate.indexOf("deg"));
+        angle = angle*1;
+    }
+
+    //angle = angle == 360 ? 0 : angle;
+    angle += 90;
+    piece.style.transform = "rotate(" + angle + "deg)";
 }
 
 function handleClick(block){
@@ -142,9 +217,6 @@ function handleClick(block){
     if(completeGame){
         return;
     }
-
-    // e = e || window.event;
-    // let block = e.currentTarget;
 
     if(!selectedBlock){
         selectBlock(block);
@@ -355,17 +427,33 @@ function check(){
 
 function onSuccess(){
     completeGame = true;
+    // 消除选中拼图块的边框样式
+    unselectBlock();
+
+    // 按顺序依次旋转拼图块，然后再消除拼图块之间的间隔
     let blocks = document.getElementsByClassName("block");
+    let rotateIndex = 0;
     for(let i = 0, len = blocks.length; i < len; i++ ){
-        blocks[i].style.padding = 0;
-        unselectBlock();
+        blocks[i].getElementsByClassName("rotate-icon")[0].style.display = "none";
+        let piece = blocks[i].getElementsByClassName("piece")[0];
+        let rotate = piece.style.transform;
+        let angle = rotate.substring(7, rotate.indexOf("deg"));
+        angle = angle*1;
+        if(angle%360 != 0){
+            setTimeout(function(){
+                blocks[i].getElementsByClassName("piece")[0].style.transform = "none";
+            }, rotateAnimationTime*rotateIndex++);
+        }
     }
 
-    showMessage("success");
+    setTimeout(function(){
+        for(let i = 0, len = blocks.length; i < len; i++ ){
+            blocks[i].style.padding = 0;
+        }
+
+        showMessage("success");
+    }, rotateAnimationTime*rotateIndex);
 }
-
-
-
 // ======================================================================
 
 function showMessage(info){
