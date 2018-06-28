@@ -7,6 +7,8 @@ var orderArr = []; // 表示拼图块随机排列顺序的数组
 var copyNode; // 拖拽生成的移动拼图块的副本节点
 var selectedBlock; // 点击选中的拼图块
 
+var blocks = [];
+
 window.onload = function(){
     init();
     this.document.getElementById("upload-btn").onchange = handleImageChange;
@@ -48,29 +50,44 @@ function renderBlocks(bgImg){
     picEle = document.createElement("div");
     addClass(picEle, "pic");
     parent.appendChild(picEle);
+
+    Block.prototype.row = row;
+    Block.prototype.column = column;
+    Block.prototype.orderArr = orderArr;
+    Block.prototype.bgImg = bgImg || defaultImage;
      
     for(let i = 0; i < row; i++){
         for(let j = 0; j < column; j++){
-            let block = createBlockDom(i, j, bgImg);
-            picEle.appendChild(block);
+            //let block = createBlockDom(i, j, bgImg);
+            let block = new Block(i, j)
+            block.createBlockDom();
+            blocks.push(block);
+            picEle.appendChild(block.element);
         }
     }
 
     picEle.addEventListener("click", function(e){
+        if(completeGame){
+            return;
+        }
+
         e = e || window.event;
         let target = e.target || e.srcElement;
+        let block = target.parentNode;
+        let id = block.id && block.id.substring(6)*1;
 
         if(target.className.indexOf("rotate-icon") != -1){
-            rotateBlock(e);
-        }else{
-            let block = target.parentNode;
-            if(block && block.id && block.id.indexOf("block_") == 0){
-                handleClick(block);
-            }
+            blocks[id].rotate();
+        }else if(id){
+            blocks[id].click();
         }
     });
 
     picEle.addEventListener("mousedown", function(e){
+        if(completeGame){
+            return;
+        }
+
         e = e || window.event;
         let target = e.target || e.srcElement;
         let block = target.parentNode;
