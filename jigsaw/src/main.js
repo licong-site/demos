@@ -74,17 +74,18 @@ function renderBlocks(bgImg){
         e = e || window.event;
         let target = e.target || e.srcElement;
         let block = target.parentNode;
-        let id = block.id && block.id.substring(6)*1;
-
-        if(target.className.indexOf("rotate-icon") != -1){
-            blocks[id].rotate();
-        }else if(id){
-            blocks[id].click();
+        if(block.id){
+            let id = block.id.substring(6)*1;
+            if(target.className.indexOf("rotate-icon") != -1){
+                blocks[id].rotate();
+            }else if(block.id.indexOf("block_") == 0){
+                blocks[id].click();
+            }
         }
     });
 
     picEle.addEventListener("mousedown", function(e){
-        if(completeGame){
+        if(completeGame || Block.prototype.dragEvent){
             return;
         }
 
@@ -92,7 +93,9 @@ function renderBlocks(bgImg){
         let target = e.target || e.srcElement;
         let block = target.parentNode;
         if(block && block.id && block.id.indexOf("block_") == 0){
-            handleMouseDown(e, block.id);
+            //handleMouseDown(e, block.id);
+            let id = block.id.substring(6)*1;
+            blocks[id].onMouseDown(e);
         }
     });
 }
@@ -147,8 +150,6 @@ function exchangeBlock(block1, block2, keepSelected) {
 
         orderArr[block2.id.substring(6)*1] = order_1*1;
         orderArr[block1.id.substring(6)*1] = order_2*1;
-
-        //console.log(orderArr);
 
         if(!keepSelected){
             // 使用键盘键交换元素位置后不会取消元素选中状态
@@ -313,11 +314,13 @@ function handleMouseDown(e, blockId){
 }
 
 function handleKeyDown(e){
-    if(selectedBlock){
+    if(Block.prototype.selectedBlock){
         e = e || window.event;
 
-        let order = selectedBlock.style.order * 1;
-        let rowIndex = Math.floor(order / column);
+        let order = Block.prototype.selectedBlock.order;
+        let column = Block.prototype.column;
+        let row = Block.prototype.row;
+        let rowIndex = Math.floor(order/column);
         let columnIndex = order - rowIndex*column;
 
         let toBlockOrder = -1;
@@ -349,26 +352,39 @@ function handleKeyDown(e){
         }
 
         if(toBlockOrder !== -1){
-            let toBlockId = orderArr.indexOf(toBlockOrder);
-            let toBlock = document.getElementById("block_" + toBlockId);
+            let toBlock;
+            for(let i=0, len=blocks.length; i<len; i++){
+                if(blocks[i].order == toBlockOrder){
+                    toBlock = blocks[i];
+                    break;
+                }
+            }
+
             if(toBlock){
-                exchangeBlock(selectedBlock, toBlock, true);
-                selectedBlock.preActionType = "keyboard";
+                toBlock.setOrder(order);
+                Block.prototype.selectedBlock.setOrder(toBlockOrder, true);
+                //selectedBlock.preActionType = "keyboard";
             }
         }
     }
 }
 
-function getBlockIdByPosition(x, y){
-    let block = document.getElementById("block_1");
-    let parent = document.getElementsByClassName("pic")[0];
-    let columnIndex = Math.floor((x - parent.offsetLeft) / block.offsetWidth);
+function getBlockByPosition(x, y){
+    let block = blocks[0].element;
+    let parent = blocks[0].element.parentNode;
+    let columnIndex = Math.floor((x - parent.offsetLeft - 4) / block.offsetWidth);
     columnIndex = columnIndex < 0 ? 0 : (columnIndex > column-1 ? column-1 : columnIndex);
-    let rowIndex = Math.floor((y - parent.offsetTop) / block.offsetHeight);
+    let rowIndex = Math.floor((y - parent.offsetTop - 4) / block.offsetHeight);
     rowIndex = rowIndex < 0 ? 0 : (rowIndex > row-1 ? row-1 : rowIndex);
     let order = rowIndex*column + columnIndex;
-    let id = orderArr.indexOf(order);
-    return "block_" + id;
+    let id;
+    for(let i=0, len=blocks.length; i<len; i++){
+        if(blocks[i].order == order){
+            id = i;
+            break;
+        }
+    }
+    return blocks[id];
 }
 
 function getRandomArr(){
