@@ -1,13 +1,8 @@
-// 对象构造函数
+// 拼图块对象的构造函数
 function Block(rowIndex, columnIndex){
-    // 公有属性，在对象实例化后调用
-    this.id = rowIndex*column + columnIndex;
-    this.order = this.orderArr[this.id];
 
-    // 私有属性，只能在构造函数内部使用
-    this.getPosition = function(){
-        
-    }
+    this.id = rowIndex*this.column + columnIndex;
+    this.order = this.orderArr[this.id];
 
     this.createBlockDom = function(){
         let block = document.createElement("div");
@@ -28,18 +23,15 @@ function Block(rowIndex, columnIndex){
         piece.style.backgroundPositionX = percentX + "%";
         piece.style.backgroundPositionY = percentY + "%";
     
-        // 将矩形块随机旋转一个角度增加游戏难度, 50%概率下不会旋转
-        var random = Math.random()*6;
-        if(random < 1){
-            // 拼图旋转角度
-            this.rotateAngle = 270;
-        }else if(random < 2){
-            this.rotateAngle = 180;
-        }else if(random < 3){
-            this.rotateAngle = 90;
+        // 将矩形块随机旋转一个角度增加游戏难度
+        if(this.column == this.row){
+            var random = Math.floor(Math.random()*4);
+            this.rotateAngle = random * 90;
         }else{
-            this.rotateAngle = 0;
+            var random = Math.floor(Math.random()*2);
+            this.rotateAngle = random * 180;
         }
+        
         piece.style.transform = "rotate(" + this.rotateAngle + "deg)";
 
         // 添加拼图旋转图标
@@ -59,13 +51,7 @@ function Block(rowIndex, columnIndex){
         }else if(this.selectedBlock.id == this.id){
             // 点击选中状态的拼图会取消中状态
             this.unselected();
-        }
-        // else if(this.prototype.preActionType == "keyboard"){
-        //     // 选中元素上一次执行键盘交换操作，下一次的点击的时候会重新选中点击元素而不是执行交换操作
-        //     unselected();
-        //     selected();
-        // }
-        else{
+        }else{
             let curOrder = this.order;
             let selectedBlockOrder = this.selectedBlock.order;
             this.setOrder(selectedBlockOrder);
@@ -73,9 +59,9 @@ function Block(rowIndex, columnIndex){
         }
     }
 
-    this.rotate = function(){
+    this.rotate = function(angle){
         let piece = this.element.getElementsByClassName("piece")[0];
-        this.rotateAngle += 90;
+        this.rotateAngle = angle!=undefined ? angle : this.rotateAngle + (this.column==this.row ? 90 : 180);
         piece.style.transform = "rotate(" + this.rotateAngle + "deg)";
     }
 
@@ -167,7 +153,6 @@ function Block(rowIndex, columnIndex){
 
             Block.prototype.dragEvent = null;
         }
-        
     }
 
     this.setOrder = function(order, keepSelected){
@@ -187,7 +172,13 @@ function Block(rowIndex, columnIndex){
             this.unselected();
         }
 
-
+        if(completeGame){
+            // ie 不支持
+            var evt = document.createEvent('Event');
+            // 定义事件类型
+            evt.initEvent('customComplete', true, false);
+            document.body.dispatchEvent(evt);
+        }
     }
 
     this.selected = function(){
@@ -199,9 +190,6 @@ function Block(rowIndex, columnIndex){
         this.__proto__.selectedBlock = null;
         removeClass(this.element, "selected");
     }
-
-
-// =================================私有方法=============================================
 
     function hasClass(ele, cls) {
         return ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
@@ -217,11 +205,10 @@ function Block(rowIndex, columnIndex){
             ele.className=ele.className.replace(reg,' ');
         }
     }
-    
-
 }
 
-// 公有静态属性
+ // 点击选中的拼图块
 Block.prototype.selectedBlock = null;
-Block.prototype.dragEvent = null; // 拖拽时在页面上移动的拼图块
+ // 拖拽时在页面上移动的拼图块
+Block.prototype.dragEvent = null;
 

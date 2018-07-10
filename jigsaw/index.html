@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <meta name="keywords" content="jigsaw, game, js">
+        <meta name="keywords" content="jigsaw, game, demo, js">
         <title>拼图游戏</title>
         <link rel="shotcut icon" href="http://192.168.30.1:8080/favicon.ico" />
         <link rel="stylesheet" type="text/css" href="src/style.css" />
@@ -18,13 +18,13 @@
                         <div class="mar-t10">
                             <label>拼图规格：</label>
                             <div class="number-input">
-                                <input type="text" id="column" class="size" readonly />
+                                <input type="text" id="row" class="size" readonly />
                                 <i class="icon_drop_up drop-icon up-icon" onclick="changeBlocksNum(event)"></i>
                                 <i class="icon_drop_down drop-icon down-icon" onclick="changeBlocksNum(event)"></i>
                             </div>
                             <span>*</span>
                             <div class="number-input">
-                                <input type="text" id="row" class="size" readonly />
+                                <input type="text" id="column" class="size" readonly />
                                 <i class="icon_drop_up drop-icon up-icon" onclick="changeBlocksNum(event)"></i>
                                 <i class="icon_drop_down drop-icon down-icon" onclick="changeBlocksNum(event)"></i>
                             </div>
@@ -39,9 +39,6 @@
                         <button class="start-btn" class="mar-t10" onclick="reRender()">重新开始</button>
                     </div>
                 </div>
-                <!-- <div class="part f-start">
-                    <div class="right"></div>
-                </div> -->
             </header>
             <div class="main">
                 <div class="pic"></div>

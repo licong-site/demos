@@ -27,8 +27,7 @@
 
 
 ### TODO
-- **面向对象编程**
-- class 命名
+- class 命名, currentColor
 
 
 ### 实现算法：
