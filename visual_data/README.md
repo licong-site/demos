@@ -44,4 +44,10 @@ pineapple 10
 
 ## TODO
 1. 输出数据按从大到小的顺序显示
+2. 读取json文件中的数据
+3. 输入规则提示
 
+## 备注
+- js 使用unicode编码的方式是 `\u + 16进制的unicode编码`
+- html 使用unicode编码的方式是 `&# + 10进制的unicode编码 + ;`, 或`&#x0 + 16进制的unicode编码 + ;`
+- css 使用unicode编码的方式是 `\ + 16进制的unicode编码`
