@@ -9,22 +9,19 @@
     <body>
         <div class="left">
             <div class="title">
-                <!-- <img src="res/logo.png"> -->
+                <img src="res/logo.png">
                 <div>数据可视化</div>
             </div>
             <div class="input">
                 <p>请在下方输入数据：</p>
-                <textarea placeholder="N&#10;name_1&#x0020;value_1&#10;name_2&#x0020;value_2&#10;..."></textarea>
+                <textarea id="data" placeholder="N(1<=N<=20)&#10;name&#x0020;ASC&#10;name_1&#x0020;value_1&#10;name_2&#x0020;value_2&#10;..."></textarea>
+                <div class="tip" id="tip"></div>
                 <button onclick="createTable()">生成柱状图</button>
             </div>
-
         </div>
         <div class="right">
             <div class="main">
-                数据可视化&#x0250c;
-                <div id="chart">
-
-                </div>
+                <div id="chart"></div>
             </div>
         </div>
     </body>
